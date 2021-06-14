@@ -1,15 +1,20 @@
 <template>
-    <div>
-        <h2>Home!</h2>
-    </div>
+  <div class="home">
+    <h2>Home!</h2>
+    <img alt="Vue logo" src="../assets/logo.png" />
+    <modal-button button-text="Open Modal!"></modal-button>
+  </div>
 </template>
 
 <script>
-    export default {
+import ModalButton from "@/components/ModalButton.vue";
 
-    }
+export default {
+  components: {
+    ModalButton,
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-
 </style>

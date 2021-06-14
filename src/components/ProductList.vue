@@ -1,129 +1,55 @@
 <template>
-  <div>
-    <h2>{{ title }}</h2>
-
-    <fieldset class="filters">
-      Sort by:
-      <button @click="sort('name')">Name</button>
-      <button @click="sort('price')">Price</button>
-      <button @click="sort('modifiedDate')">Date</button>
-      <span> Filter by name: <input v-model="filterName" /></span>
-    </fieldset>
-    <ul class="products">
-      <li
-        v-for="product in sortedFilteredPaginatedProducts"
-        v-bind:key="product.id"
-        :class="{
-          discontinued: product.discontinued,
-          selected: product === selectedProduct,
-        }"
-        @click="onSelect(product)"
-        :title="JSON.stringify(product)"
-      >
-        <span class="name">{{ product.name }}</span>
-        <span class="description">{{ product.description }}</span>
-        <span class="price">{{ product.price }}</span>
-      </li>
-    </ul>
-    <button @click="prevPage" :disabled="pageNumber === 1">
-      &lt; Previous
-    </button>
-    Page {{ pageNumber }} / {{ pageCount }}
-    <button @click="nextPage" :disabled="pageNumber >= pageCount">
-      Next &gt;
-    </button>
-  </div>
+        <fieldset class="filters">
+          {{itemsNumber}} products |
+          Sort by:
+          <button @click="sort('name')">Name</button>
+          <button @click="sort('price')">Price</button>
+          <button @click="sort('modifiedDate')">Date</button>
+          <span> Filter by name: <input v-model="filterName" /></span>
+        </fieldset>
+        <ul class="products">
+            <router-link
+              v-for="product in sortedFilteredPaginatedItems" v-bind:key="product.id"
+              :to="'/product/' + product.id"
+              custom v-slot="{ navigate }">
+              <li role="link"
+                  class="text"
+                  v-bind:class='{ discontinued: product.discontinued, selected: product === selectedItem }'
+                  :title="JSON.stringify(product)"
+                   @click="navigate"
+                  >
+                <slot :product="product">
+                    {{ product.name }}
+                </slot>
+              </li>
+            </router-link>
+        </ul>
 </template>
 
 <script>
+import useList from "@/composables/items-list";
 
 export default {
-  components: {
-  },
-  props: {
-    products: {
-      type: Array,
-      default: () => [],
-    },
-    pageSize: {
-      type: Number,
-      required: false,
-      default: 5,
-    },
-  },
-  data() {
-    return {
-      title: "Products",
-      selectedProduct: null,
-      filterName: "",
-      sortName: "modifiedDate",
-      sortDir: "desc",
-      pageNumber: 1,
-    };
-  },
-  methods: {
-    sort: function (s) {
-      //if s == current sort, reverse order
-      if (s === this.sortName) {
-        this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
+    props: {
+      products: {
+        type: Array
+      },
+      pageSize: {
+        type: Number,
+        required: false,
+        default: 5
+      },
+      title: {
+        type: String,
+        default: "Products"
       }
-      this.sortName = s;
     },
-    nextPage() {
-      this.pageNumber++;
-      this.selectedProduct = null;
-    },
-    prevPage() {
-      this.pageNumber--;
-      this.selectedProduct = null;
-    },
-    resetPage() {
-      this.pageNumber = 1;
-    },
-    onSelect(product) {
-      this.$router.push({ name: "product", params: { id: product.id } });
-    },
-  },
-  computed: {
-    filteredProducts() {
-      let filter = new RegExp(this.filterName, "i");
-      return this.products.filter((el) => el.name.match(filter));
-    },
-    sortedFilteredProducts() {
-      return [...this.filteredProducts].sort((a, b) => {
-        let modifier = 1;
-        if (this.sortDir === "desc") modifier = -1;
-        if (a[this.sortName] < b[this.sortName]) return -1 * modifier;
-        if (a[this.sortName] > b[this.sortName]) return 1 * modifier;
-        return 0;
-      });
-    },
-    sortedFilteredPaginatedProducts() {
-      const start = (this.pageNumber - 1) * this.pageSize,
-        end = start + this.pageSize;
-
-      return this.sortedFilteredProducts.slice(start, end);
-    },
-    pageCount() {
-      let l = this.filteredProducts.length,
-        s = this.pageSize;
-      return Math.ceil(l / s);
-    },
-  },
-  watch: {
-    // reset pagination when filtering
-    filterName() {
-      this.resetPage();
-    },
-    // reset pagination when sorting
-    sortName() {
-      this.resetPage();
-    },
-    sortDir() {
-      this.resetPage();
-    },
-  },
-};
+    setup (props) {
+      return {
+        ...useList(props.products, props.pageSize, "modifiedDate", "desc"),
+      }
+    }
+}
 </script>
 
 <style lang="css" scoped>
